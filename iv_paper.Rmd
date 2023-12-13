@@ -1,0 +1,64 @@
+
+
+```{r}
+library(Rcpp)
+library(survival)
+library(timereg)
+library(lava)
+
+```
+```{r}
+source("http://192.38.117.59/~tma/Rcode/sim_setup1.R") # Simulate data and contains R-function
+# running the IV-estimation
+source("http://192.38.117.59/~tma/Rcode/test_IV_function.R") # Contains R-function that also allows covariates L
+# X # Exposure
+# G # Instrument
+# L # Covariates
+# time # Time-variable
+# status # Status-variable
+9
+length(time)
+cbind(time,status,L,G,X)[1:10,] # First 10 lines of data
+#Observational analysis (naive analysis):
+fit.aalen=aalen(Surv(time,status==1)~X+G+L[,1:dim(L)[2]],max.time=3,n.sim=1000)
+summary(fit.aalen)
+# Naive estimate is plotted further below along with IV-estimate.
+```
+
+```{r}
+# Naive estimate is plotted further below along with IV-estimate.
+## IV-estimation:
+fit.iv=iv_est1(time,status,G,X,L,max.time=3,max.time.bet=2.8,n.sim=1000,G_type=0)
+# This runs the IV-analysis. 3 years of follow-up; the constant effect is estimated based on 2.8 years of follow-up
+# 1000 resamplings are requested for testing goodness-of-fit of constant effects model.
+# G_type gives the type of the instrument; 1 is continuous; 0 is binary
+# The conditional mean E(G|L) is fitted using a linear model when G cont, and logistic regression when G binary
+summary(fit.iv)
+names(fit.iv) # res1 contains various results from the IV-analysis:
+# stime: is the ordered event times within (0,max.time)
+# B: is the IV-estimator \hat B_X(t)
+# se_B: the estimated standard errors of \hat B_X(t)
+# pval_0: p-value corresponding to supremum test of the null B_X(t)=0.
+# eps_B: is the iid-decomposition of \sqrt{n}(\hat B_X(t) - B_X(t))
+# beta: is the IV constant effects estimator \hat \beta_X
+# se_beta: the estimated standard error of \hat \beta_X
+# pval_beta: p-value corresponding to the null \beta_X=0.
+# pval_GOF_sup: p-value corresponding to supremum test of the null that const. effects model is ok.
+# pval_GOF_CvM: as pval_GOF_sup but now based on the Cramer Von Mises test statistic
+# GOF.resamp: a matrix with first row the ordered jump times in (0,max.time.bet),
+# second row the observed test process, and the remaining rows are 50 processes sampled under the null.
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+## Ploting estimates
+par(mfrow=c(1,2))
+plot(fit.iv)
+lines(fit.aalen$cum[,1],fit.aalen$cum[,3],lty=2,type="s")
+# Estimated constant effect is the straight line (true value for this simulation is slope=0.1)
+# Iv-estimate is given along with 95% pointwise conf.bands. (full lines)
+# Naive estimate is given as dashed curve.
+## GOF for const. eff model
+plot(fit.iv,gof=T)
+```
