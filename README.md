@@ -1,5 +1,5 @@
 # Survival-Analysis-Documentation
-R code and documentation for Survival Analysis
+R code and documentation for Survival Analysis 
 
 ## Paper 1: Eliminating Survivor Bias in Two-stage Instrumental Variable Estimators
 ### Code file name: surv_analysis.rmd
